@@ -2,7 +2,7 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
-const uploadRouter = require('./routes/upload');
+const imageRouter = require('./routes/images');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -18,4 +18,4 @@ app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
 });
 
-app.use('/api/upload', uploadRouter);
+app.use('/api/images', imageRouter);
