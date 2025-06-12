@@ -6,7 +6,7 @@ const db = require('../db');
 require('dotenv').config();
 
 
-// upload image using multer and check the right type of uploaded file
+// upload image using multer
 const upload = multer({
     storage: multerS3({
         s3: s3,
@@ -19,6 +19,7 @@ const upload = multer({
             cb(null, filename);
         },
     }),
+    // check the type of uploaded file
     fileFilter: (req, file, cb) => {
         if (!file.mimetype.startsWith('image/')) {
             cb(new Error('Only image files are allowed!'), false);
@@ -135,10 +136,25 @@ const updateImage = async (req, res) => {
 
 // fetch paginated list of images
 const getImages = async (req, res) => {
-    const {page = 1, limit = 10} = req.query;
+    let page = parseInt(req.query.page, 10);
+    let limit = parseInt(req.query.limit, 10);
+
+    // check page and limit is valid
+    page = (isNaN(page) || page < 1) ? 1 : page;
+    limit = (isNaN(limit) || limit < 1 || limit > 100) ? 10 : limit;
+
     const offset = (page - 1) * limit;
 
     try {
+        const totalRes = await db.query('SELECT COUNT(*) FROM images');
+        const total = parseInt(totalRes.rows[0].count, 10);
+        const totalPages = Math.ceil(total / limit);
+
+        // check page boundary
+        if (page > totalPages && total > 0) {
+            return res.status(404).json({error: 'Page out of range!'});
+        }
+
         const {rows} = await db.query(
             `SELECT id, title, description, url, created_at
             FROM images
@@ -147,14 +163,13 @@ const getImages = async (req, res) => {
             [limit, offset]
         );
 
-        const totalRes = await db.query('SELECT COUNT(*) FROM images');
-        const total = parseInt(totalRes.rows[0].count, 10);
-
         res.status(200).json({
-            page: parseInt(page, 10),
-            limit: parseInt(limit, 10),
+            page, 
+            limit, 
             total,
-            totalPages: Math.ceil(total / limit),
+            totalPages,
+            hasNextPage: page < totalPages,
+            hasPrevPage: page > 1,
             images: rows,
         });
     } catch (err) {
