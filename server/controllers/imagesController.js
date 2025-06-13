@@ -35,12 +35,27 @@ const uploadImage = async (req, res) => {
     }
     
     try {
-        const {user_id, description} = req.body;
+        const {user_id, title, description, class_year, tags, longitude, latitude} = req.body;
         const imageUrl = req.file.location;
 
         await db.query(
-            `INSERT INTO images (user_id, url, description) VALUES ($1, $2, $3)`,
-            [user_id, imageUrl, description]
+            `INSERT INTO images (user_id, url, title, description, class_year, tags, location) 
+            VALUES ($1, $2, $3, $4, $5, $6,
+                    CASE
+                        WHEN $7 IS NOT NULL AND $8 IS NOT NULL
+                        THEN ST_SetSRID(ST_MakePoint($7, $8), 4326)::GEOGRAPHY
+                        ELSE NULL
+                    END)`,
+            [
+                user_id, 
+                imageUrl, 
+                title || null, 
+                description || null,
+                class_year,
+                tags ? tags.split(',').map(t=>t.trim()): null,
+                longitude ? parseFloat(longitude) : null,
+                latitude ? paseFloat(latitude) : null
+            ]
         );
         res.status(200).json({message: 'Image uploaded successfully!', imageUrl});
     } catch (err) {
@@ -80,7 +95,7 @@ const deleteImage = async (req, res) => {
 // update image with new file, title, description
 const updateImage = async (req, res) => {
     const imageId = req.params.id;
-    const {title, description} = req.body;
+    const {title, description, class_year, tags, longitude, latitude} = req.body;
 
     try {
         const {rows} = await db.query(
@@ -115,6 +130,23 @@ const updateImage = async (req, res) => {
             updates.push(`description = $${paramIndex++}`);
             values.push(description);
         }
+
+        if (class_year !== undefined) {
+            updates.push(`class_year = $${paramIndex++}`);
+            values.push(class_year);
+        }
+
+        if (tags !== undefined) {
+            updates.push(`tags = $${paramIndex++}`);
+            values.push(tags.split(',').map(tag => tag.trim()));
+        }
+
+        if (longitude && latitude) {
+            updates.push(`location = ST_SetSRID(ST_MakePoint($${paramIndex}, $${paramIndex+1}), 4326)::GEOGRAPHY`);
+            values.push(longitude, latitude);
+            paramIndex += 2;
+        }
+
         
         if (updates.length === 0) {
             return res.status(400).json({error: 'No update provided!'});
@@ -138,6 +170,7 @@ const updateImage = async (req, res) => {
 const getImages = async (req, res) => {
     let page = parseInt(req.query.page, 10);
     let limit = parseInt(req.query.limit, 10);
+    const classYearFilter = req.query.class_year;
 
     // check page and limit is valid
     page = (isNaN(page) || page < 1) ? 1 : page;
@@ -146,6 +179,16 @@ const getImages = async (req, res) => {
     const offset = (page - 1) * limit;
 
     try {
+        // add filtering by class_year
+        let baseQuery = 'FROM images';
+        let whereClause = '';
+        const values = [];
+
+        if (classYearFilter) {
+            whereClause = ` WHERE class_year = $1`;
+            values.push(classYearFilter);
+        }
+
         const totalRes = await db.query('SELECT COUNT(*) FROM images');
         const total = parseInt(totalRes.rows[0].count, 10);
         const totalPages = Math.ceil(total / limit);
@@ -155,12 +198,13 @@ const getImages = async (req, res) => {
             return res.status(404).json({error: 'Page out of range!'});
         }
 
+        values.push(limit, offset);
         const {rows} = await db.query(
-            `SELECT id, title, description, url, created_at
-            FROM images
+            `SELECT id, title, description, url, class_year, tags, created_at
+            ${baseQuery}${whereClause}
             ORDER BY created_at DESC
-            LIMIT $1 OFFSET $2`,
-            [limit, offset]
+            LIMIT $${values.length - 1} OFFSET $${values.length}`,
+            values
         );
 
         res.status(200).json({

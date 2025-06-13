@@ -2,6 +2,8 @@ DROP TABLE IF EXISTS comments;
 DROP TABLE IF EXISTS images;
 DROP TABLE IF EXISTS users;
 
+CREATE EXTENSION IF NOT EXISTS postgis;
+
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
@@ -17,7 +19,9 @@ CREATE TABLE images (
     title VARCHAR(100),
     description TEXT,
     url TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    class_year INTEGER,
+    tags TEXT[]
 );
 
 CREATE TABLE comments(
