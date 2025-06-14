@@ -19,9 +19,10 @@ CREATE TABLE images (
     title VARCHAR(100),
     description TEXT,
     url TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    class_year INTEGER,
-    tags TEXT[]
+    class_year INTEGER NOT NULL,
+    tags TEXT[],
+    location GEOGRAPHY(Point, 4326),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE comments(
