@@ -29,7 +29,7 @@ const upload = multer({
     },
 });
 
-const uploadImage = async (req, res) => {
+const uploadImage = async(req, res) => {
     if (!req.file) {
         return res.status(400).json({error: 'No image file uploaded or wrong file type!'});
     }
@@ -54,7 +54,7 @@ const uploadImage = async (req, res) => {
                 class_year,
                 tags ? tags.split(',').map(t=>t.trim()): null,
                 longitude ? parseFloat(longitude) : null,
-                latitude ? paseFloat(latitude) : null
+                latitude ? parseFloat(latitude) : null
             ]
         );
         res.status(200).json({message: 'Image uploaded successfully!', imageUrl});
@@ -64,7 +64,7 @@ const uploadImage = async (req, res) => {
     }
 };
 
-const deleteImage = async (req, res) => {
+const deleteImage = async(req, res) => {
     const imageId = req.params.id;
     
     try {
@@ -93,7 +93,7 @@ const deleteImage = async (req, res) => {
 };
 
 // update image with new file, title, description
-const updateImage = async (req, res) => {
+const updateImage = async(req, res) => {
     const imageId = req.params.id;
     const {title, description, class_year, tags, longitude, latitude} = req.body;
 
@@ -147,7 +147,6 @@ const updateImage = async (req, res) => {
             paramIndex += 2;
         }
 
-        
         if (updates.length === 0) {
             return res.status(400).json({error: 'No update provided!'});
         }
@@ -167,7 +166,7 @@ const updateImage = async (req, res) => {
 };
 
 // fetch paginated list of images
-const getImages = async (req, res) => {
+const getImages = async(req, res) => {
     let page = parseInt(req.query.page, 10);
     let limit = parseInt(req.query.limit, 10);
     const classYearFilter = req.query.class_year;
