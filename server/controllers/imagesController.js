@@ -30,6 +30,10 @@ const upload = multer({
 });
 
 const uploadImage = async(req, res) => {
+    console.log('Upload image called');
+    console.log('req.file:', req.file);
+    console.log('req.body:', req.body);
+    
     if (!req.file) {
         return res.status(400).json({error: 'No image file uploaded or wrong file type!'});
     }
@@ -38,25 +42,24 @@ const uploadImage = async(req, res) => {
         const {user_id, title, description, class_year, tags, longitude, latitude} = req.body;
         const imageUrl = req.file.location;
 
-        await db.query(
-            `INSERT INTO images (user_id, url, title, description, class_year, tags, location) 
-            VALUES ($1, $2, $3, $4, $5, $6,
-                    CASE
-                        WHEN $7 IS NOT NULL AND $8 IS NOT NULL
-                        THEN ST_SetSRID(ST_MakePoint($7, $8), 4326)::GEOGRAPHY
-                        ELSE NULL
-                    END)`,
-            [
-                user_id, 
-                imageUrl, 
-                title || null, 
-                description || null,
-                class_year,
-                tags ? tags.split(',').map(t=>t.trim()): null,
-                longitude ? parseFloat(longitude) : null,
-                latitude ? parseFloat(latitude) : null
-            ]
-        );
+        const tagArray = tags ? tags.split(',').map(t=>t.trim()): null;
+        const longitudeVal = longitude ? parseFloat(longitude) : null;
+        const latitudeVal = latitude ? parseFloat(latitude) : null;
+
+        let query;
+        let values;
+
+        if (longitudeVal !== null & latitudeVal !== null) {
+            query = `INSERT INTO images (user_id, url, title, description, class_year, tags, location)
+                    VALUES ($1, $2, $3, $4, $5, $6, ST_SetSRID(ST_MakePoint($7::float8, $8::float8), 4326)::GEOGRAPHY)`;
+            values = [user_id, imageUrl, title || null, description || null, class_year, tagArray, longitudeVal, latitudeVal];
+        } else {
+            query = `INSERT INTO images (user_id, url, title, description, class_year, tags, location)
+                    VALUES ($1, $2, $3, $4, $5, $6, NULL)`;
+            values = [user_id, imageUrl, title || null, description || null, class_year, tagArray];
+        }
+
+        await db.query(query, values);
         res.status(200).json({message: 'Image uploaded successfully!', imageUrl});
     } catch (err) {
         console.error(err);
