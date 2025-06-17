@@ -179,6 +179,7 @@ const getImages = async(req, res) => {
     let limit = parseInt(req.query.limit, 10);
     const classYearFilter = req.query.class_year;
     const designerNameFilter = req.query.designer_name;
+    const tagsFilter = req.query.tags;
 
     // check page and limit is valid
     page = (isNaN(page) || page < 1) ? 1 : page;
@@ -189,20 +190,28 @@ const getImages = async(req, res) => {
     try {
         // add filtering by class_year
         let baseQuery = 'FROM images';
-        let whereClause = '';
+        const conditions = [];
         const values = [];
 
         if (classYearFilter) {
-            whereClause = ` WHERE class_year = $1`;
             values.push(classYearFilter);
+            conditions.push(`class_year = $${values.length}`);
         }
 
         if (designerNameFilter) {
-            whereClause = ` WHERE designer_name = $1`;
             values.push(designerNameFilter);
+            conditions.push(`designer_name = $${values.length}`);
         }
 
-        const totalRes = await db.query('SELECT COUNT(*) FROM images');
+        if (tagsFilter) {
+            const tagArray = tagsFilter.split(',').map(tag => tag.trim());
+            values.push(tagArray);
+            conditions.push(`tags && $${values.length}::text[]`);
+        }
+
+        const whereClause = conditions.length > 0 ? ' WHERE ' + conditions.join(' AND ') : '';
+
+        const totalRes = await db.query(`SELECT COUNT(*) ${baseQuery}${whereClause}`, values);
         const total = parseInt(totalRes.rows[0].count, 10);
         const totalPages = Math.ceil(total / limit);
 
