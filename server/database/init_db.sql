@@ -18,6 +18,7 @@ CREATE TABLE images (
     user_id INTEGER REFERENCES users(id),
     title VARCHAR(100),
     description TEXT,
+    designer_name VARCHAR(100),
     url TEXT NOT NULL,
     class_year INTEGER NOT NULL,
     tags TEXT[],

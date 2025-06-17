@@ -1,7 +1,6 @@
 const request = require('supertest');
 const app = require('../../index');
 const db = require('../../db');
-const fs = require('fs');
 const path = require('path');
 
 describe('Image API integration tests', () => {
@@ -32,6 +31,8 @@ describe('Image API integration tests', () => {
                                 .post('/api/images')
                                 .field('user_id', testUserId)
                                 .field('title', 'Test Image')
+                                .field('description', 'Test description')
+                                .field('designer_name', 'Kristen Li')
                                 .field('class_year', 2025)
                                 .attach('image', path.join(__dirname, '../../test_assets/test_dog.jpg'));
         
@@ -68,13 +69,15 @@ describe('Image API integration tests', () => {
         const response = await request(app)
                                 .patch(`/api/images/${uploadedImageId}`)
                                 .field('title', 'New title')
+                                .field('designer_name', 'LRY')
                                 .field('tags', 'tag1, tag2')
         
         expect(response.statusCode).toBe(200);
         expect(response.body.message).toBe('Image updated successfully!');
 
-        const dbRes = await db.query('SELECT title, tags FROM images WHERE id = $1', [uploadedImageId]);
+        const dbRes = await db.query('SELECT title, designer_name, tags FROM images WHERE id = $1', [uploadedImageId]);
         expect(dbRes.rows[0].title).toBe('New title');
+        expect(dbRes.rows[0].designer_name).toBe('LRY');
         expect(dbRes.rows[0].tags).toEqual(['tag1', 'tag2']);
     });
 

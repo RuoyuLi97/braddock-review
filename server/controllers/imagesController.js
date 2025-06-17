@@ -39,7 +39,7 @@ const uploadImage = async(req, res) => {
     }
     
     try {
-        const {user_id, title, description, class_year, tags, longitude, latitude} = req.body;
+        const {user_id, title, description, designer_name, class_year, tags, longitude, latitude} = req.body;
         const imageUrl = req.file.location;
 
         const tagArray = tags ? tags.split(',').map(t=>t.trim()): null;
@@ -50,13 +50,13 @@ const uploadImage = async(req, res) => {
         let values;
 
         if (longitudeVal !== null & latitudeVal !== null) {
-            query = `INSERT INTO images (user_id, url, title, description, class_year, tags, location)
-                    VALUES ($1, $2, $3, $4, $5, $6, ST_SetSRID(ST_MakePoint($7::float8, $8::float8), 4326)::GEOGRAPHY)`;
-            values = [user_id, imageUrl, title || null, description || null, class_year, tagArray, longitudeVal, latitudeVal];
+            query = `INSERT INTO images (user_id, url, title, description, designer_name, class_year, tags, location)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, ST_SetSRID(ST_MakePoint($8::float8, $9::float8), 4326)::GEOGRAPHY)`;
+            values = [user_id, imageUrl, title || null, description || null, designer_name || null, class_year, tagArray, longitudeVal, latitudeVal];
         } else {
-            query = `INSERT INTO images (user_id, url, title, description, class_year, tags, location)
-                    VALUES ($1, $2, $3, $4, $5, $6, NULL)`;
-            values = [user_id, imageUrl, title || null, description || null, class_year, tagArray];
+            query = `INSERT INTO images (user_id, url, title, description, designer_name, class_year, tags, location)
+                    VALUES ($1, $2, $3, $4, $5, $6, $7, NULL)`;
+            values = [user_id, imageUrl, title || null, description || null, designer_name || null, class_year, tagArray];
         }
 
         await db.query(query, values);
@@ -98,7 +98,7 @@ const deleteImage = async(req, res) => {
 // update image with new file, title, description
 const updateImage = async(req, res) => {
     const imageId = req.params.id;
-    const {title, description, class_year, tags, longitude, latitude} = req.body;
+    const {title, description, designer_name, class_year, tags, longitude, latitude} = req.body;
 
     try {
         const {rows} = await db.query(
@@ -132,6 +132,11 @@ const updateImage = async(req, res) => {
         if (description !== undefined) {
             updates.push(`description = $${paramIndex++}`);
             values.push(description);
+        }
+
+        if (designer_name !== undefined) {
+            updates.push(`designer_name = $${paramIndex++}`);
+            values.push(designer_name);
         }
 
         if (class_year !== undefined) {
@@ -173,6 +178,7 @@ const getImages = async(req, res) => {
     let page = parseInt(req.query.page, 10);
     let limit = parseInt(req.query.limit, 10);
     const classYearFilter = req.query.class_year;
+    const designerNameFilter = req.query.designer_name;
 
     // check page and limit is valid
     page = (isNaN(page) || page < 1) ? 1 : page;
@@ -191,6 +197,11 @@ const getImages = async(req, res) => {
             values.push(classYearFilter);
         }
 
+        if (designerNameFilter) {
+            whereClause = ` WHERE designer_name = $1`;
+            values.push(designerNameFilter);
+        }
+
         const totalRes = await db.query('SELECT COUNT(*) FROM images');
         const total = parseInt(totalRes.rows[0].count, 10);
         const totalPages = Math.ceil(total / limit);
@@ -202,7 +213,7 @@ const getImages = async(req, res) => {
 
         values.push(limit, offset);
         const {rows} = await db.query(
-            `SELECT id, title, description, url, class_year, tags, created_at
+            `SELECT id, title, description, designer_name, url, class_year, tags, created_at
             ${baseQuery}${whereClause}
             ORDER BY created_at DESC
             LIMIT $${values.length - 1} OFFSET $${values.length}`,

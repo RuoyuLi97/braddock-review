@@ -36,6 +36,7 @@ describe('uploadImage', () => {
                 user_id: 1,
                 title: 'title',
                 description: 'desc',
+                designer_name: 'Kristen Li',
                 class_year: 2025,
                 tags: 'tag1, tag2',
                 longitude: '120.5',
@@ -147,6 +148,7 @@ describe('updateImage', () => {
             body: {
                 title: 'new title',
                 description: 'new desc',
+                designer_name: 'LRY',
                 class_year: 2026,
                 tags: 'tag1, tag2',
                 longitude: 120.5,
@@ -188,7 +190,7 @@ describe('getImages', () => {
 
         db.query.mockResolvedValueOnce({rows: [{count: '15'}]});
         db.query.mockResolvedValueOnce({rows: [
-            {id: 1, title: 'title', description: 'desc', url: 'url', class_year: 2025, tags: ['tag1'], created_at: new Date()}
+            {id: 1, title: 'title', description: 'desc', designer_name: 'Kristen Li', url: 'url', class_year: 2025, tags: ['tag1'], created_at: new Date()}
         ]});
 
         await getImages(req, res);
