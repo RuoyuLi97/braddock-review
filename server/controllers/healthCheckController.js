@@ -47,7 +47,7 @@ const getConnectionHealthStatus = async(req, res) => {
                 },
                 s3: s3Health.status === 'fulfilled' ? s3Health.value : {
                     status: 'unhealthy',
-                    error: dbHealth.reason?.message || 'Connection failed!'
+                    error: s3Health.reason?.message || 'Connection failed!'
                 }
             }
         };
@@ -66,7 +66,7 @@ const getConnectionHealthStatus = async(req, res) => {
             error: error.message
         });
     }
-}
+};
 
 module.exports = {
     getHealthStatus,
