@@ -24,7 +24,7 @@ pool.on('error', (err, client) => {
 // Test database connection
 const testDatabaseConnection = async() => {
     try {
-        const client = await pool.connet();
+        const client = await pool.connect();
         const result = await client.query('SELECT NOW()');
         client.release();
         return {
