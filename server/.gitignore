@@ -1,5 +1,7 @@
 # Ignore environment variables file
 .env
+.env.local
+.env.*.local
 
 # Ignore Node.js dependencies
 node_modules/
