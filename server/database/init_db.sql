@@ -27,7 +27,6 @@ CREATE TABLE designs (
     description TEXT,
     designer_name VARCHAR(100),
     class_year INTEGER NOT NULL,
-    tags TEXT[],
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
