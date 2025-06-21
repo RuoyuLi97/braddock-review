@@ -39,7 +39,7 @@ CREATE TABLE tags (
     slug VARCHAR(50) UNIQUE NOT NULL,
     description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-)
+);
 
 -- Design Tags: many-to-many relationship between designs and tags
 CREATE TABLE design_tags (
@@ -48,7 +48,7 @@ CREATE TABLE design_tags (
     tag_id INTEGER REFERENCES tags(id) ON DELETE CASCADE NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(design_id, tag_id)
-)
+);
 
 -- Design blocks: sections/parts of each design page (analysis, master plan, etc.)
 CREATE TABLE design_blocks (
@@ -68,7 +68,7 @@ CREATE TABLE media (
     design_id INTEGER REFERENCES designs(id) ON DELETE CASCADE,
     user_id INTEGER REFERENCES users(id),
     media_type VARCHAR(20) NOT NULL CHECK(media_type IN ('design_image', 'video', 'icon', 'backstage_photo', 'map_dot')),
-    title VARCHAR(100),
+    title VARCHAR(200),
     description TEXT,
     url TEXT NOT NULL,
     duration INTEGER, -- for video duration
@@ -118,46 +118,46 @@ CREATE INDEX idx_media_location ON media USING GIST(location);
 -- Comment indexing
 CREATE INDEX idx_comments_design_id ON comments(design_id);
 CREATE INDEX idx_comments_design_block_id ON comments(design_block_id);
-CREATE INDEX idx_comments_parent_common_id ON comments(parent_comment_id);
+CREATE INDEX idx_comments_parent_comment_id ON comments(parent_comment_id);
 CREATE INDEX idx_comments_user_id ON comments(user_id);
 CREATE INDEX idx_comments_is_read ON comments(is_read);
 
 -- Create trigger function to update updated_at
 CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $
+RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = CURRENT_TIMESTAMP;
     RETURN NEW;
 END;
-$ language 'plpgsql';
+$$ LANGUAGE 'plpgsql';
 
 -- Create trigger for all tables with updated_at
 -- Users
 CREATE TRIGGER updated_users_updated_at
     BEFORE UPDATE ON users
     FOR EACH ROW
-    update_updated_at_column()
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Designs
 CREATE TRIGGER updated_designs_updated_at
     BEFORE UPDATE ON designs
     FOR EACH ROW
-    update_updated_at_column()
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Design blocks
 CREATE TRIGGER updated_design_blocks_updated_at
     BEFORE UPDATE ON design_blocks
     FOR EACH ROW
-    update_updated_at_column()
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Media
 CREATE TRIGGER updated_media_updated_at
     BEFORE UPDATE ON media
     FOR EACH ROW
-    update_updated_at_column()
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Comments
 CREATE TRIGGER updated_comments_updated_at
     BEFORE UPDATE ON comments
     FOR EACH ROW
-    update_updated_at_column()
+    EXECUTE FUNCTION update_updated_at_column();
