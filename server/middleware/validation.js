@@ -217,7 +217,7 @@ const tagValidation = [
     validators.simpleText('name', 1, 50, false),
     validators.simpleText('slug', 1, 50, false),
     validators.longText('description', 1, 1000, ['b', 'i', 'em', 'strong', 'p', 'br'], true)
-]
+];
 
 // Design block
 const designBlockValidation = [
