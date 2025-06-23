@@ -247,7 +247,7 @@ const commentValidation = [
 ];
 
 // Error handler
-const errorHandler = (req, res, next) => {
+const validationErrorHandler = (req, res, next) => {
     const errors = validationResult(req);
 
     if (!errors.isEmpty()) {
@@ -278,5 +278,5 @@ module.exports = {
     designBlockValidation,
     mediaValidation,
     commentValidation,
-    errorHandler
+    validationErrorHandler
 };
