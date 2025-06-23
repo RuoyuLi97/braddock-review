@@ -22,7 +22,7 @@ const authenticateToken = (req, res, next) => {
 
         next();
     } catch (error) {
-        console.warn(`AUTH FALIED: ${req.ip} - ${err.message}`);
+        console.warn(`AUTH FALIED: ${req.ip} - ${error.message}`);
 
         if (error.name === 'TokenExpiredError') {
             return res.status(401).json({

@@ -117,7 +117,7 @@ const validators = {
 
         return validator
                 .isInt(options)
-                .withMessage(`${fieldNmae} must be a valid integer ${max ? `between ${min} and ${max}` : `minimun ${min}`}!`);
+                .withMessage(`${fieldName} must be a valid integer ${max ? `between ${min} and ${max}` : `minimun ${min}`}!`);
     },
 
     // Enum
@@ -167,7 +167,7 @@ const validators = {
 
                     const [lon, lat] = location.coordinates;
                     if (typeof lon !== 'number' || typeof lat !== 'number' || 
-                        lon < -180 || long > 180 || lat < -90 || lat > 90) {
+                        lon < -180 || lon > 180 || lat < -90 || lat > 90) {
                             throw new Error('Location coordinates must be valid longitude (-180 to 180) and latitude (-90 to 90)!');
                     }
 
