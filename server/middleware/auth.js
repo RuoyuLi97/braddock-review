@@ -102,7 +102,7 @@ const requireOwnership = (tableName) => {
             let query;
 
             // Validate table name
-            const allowedTables = ['designs', 'design_tags', 'design_blocks', 'media', 'comments'];
+            const allowedTables = ['designs', 'design_tags', 'design_blocks', 'media', 'block_media', 'comments'];
             if (!allowedTables.includes(tableName)) {
                 return res.status(400).json({error: 'Invalid resource type!'});
             }
@@ -128,6 +128,14 @@ const requireOwnership = (tableName) => {
                             JOIN designs d ON db.design_id = d.id
                             WHERE db.id = $1`;
                     break;
+
+                case 'block_media':
+                    query = `SELECT bm.*, d.user_id
+                            FROM block_media bm
+                            JOIN design_blocks db ON bm.design_block_id = db.id
+                            JOIN designs d ON db.design_id = d.id
+                            WHERE db.id = $1`;
+                    break;
             }
 
             const result = await db.query(query, [resourceId]);
@@ -135,7 +143,9 @@ const requireOwnership = (tableName) => {
             const resource = result.rows[0];
 
             if (!resource) {
-                const resourceName = tableName === 'media' ? 'media' : tableName.slice(0, -1).replace('_', ' ');
+                const resourceName = (tableName === 'media' || tableName === 'block_media') 
+                                    ? tableName.replace('_', ' ') 
+                                    : tableName.slice(0, -1).replace('_', ' ');
                 return res.status(404).json({
                     error: `${resourceName.replace(/^\w/, c => c.toUpperCase())} not found or you don't have access to it!`
                 });
