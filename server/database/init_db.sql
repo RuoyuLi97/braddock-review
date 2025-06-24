@@ -1,6 +1,7 @@
 DROP TABLE IF EXISTS comments;
 DROP TABLE IF EXISTS media;
 DROP TABLE IF EXISTS design_blocks;
+DROP TABLE IF EXISTS block_media;
 DROP TABLE IF EXISTS designs;
 DROP TABLE IF EXISTS tags;
 DROP TABLE IF EXISTS design_tags;
@@ -57,6 +58,8 @@ CREATE TABLE design_blocks (
     title VARCHAR(200),
     content TEXT,
     display_order INTEGER NOT NULL DEFAULT 0,
+    layout_type VARCHAR(50) DEFAULT 'default',
+    layout_settings JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -74,8 +77,26 @@ CREATE TABLE media (
     thumbnail_url TEXT, -- for video url
     location GEOGRAPHY(Point, 4326), -- for map dots
     class_year INTEGER,
+    alt_text TEXT,
+    caption TEXT,
+    file_size INTEGER,
+    dimension JSONB,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Block Media: many-to-many between design_blocks and media with layout positioning
+CREATE TABLE block_media (
+    id SERIAL PRIMARY KEY,
+    design_block_id INTEGER REFERENCES design_blocks(id) ON DELETE CASCADE NOT NULL,
+    media_id INTEGER REFERENCES media(id) ON DELETE CASCADE NOT NULL,
+    position_order INTEGER NOT NULL DEFAULT 0,
+    layout_position VARCHAR(50),
+    media_config JSONB,
+    text_overlay JSONB,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(design_block_id, media_id)
 );
 
 -- Comments: with threaded replies and read/unread tracking
@@ -107,12 +128,19 @@ CREATE INDEX idx_design_tags_tag_id ON design_tags(tag_id);
 
 -- Design blocks indexing
 CREATE INDEX idx_design_blocks_design_id ON design_blocks(design_id);
+CREATE INDEX idx_design_blocks_display_order ON design_blocks(design_id, display_order);
+CREATE INDEX idx_design_blocks_layout_type ON design_blocks(layout_type);
 
 -- Media indexing
 CREATE INDEX idx_media_design_id ON media(design_id);
 CREATE INDEX idx_media_user_id ON media(user_id);
 CREATE INDEX idx_media_media_type ON media(media_type);
 CREATE INDEX idx_media_location ON media USING GIST(location);
+
+-- Block Media indexing
+CREATE INDEX idx_block_media_design_block_id ON block_media(design_block_id);
+CREATE INDEX idx_block_media_media_id ON block_media(media_id);
+CREATE INDEX idx_block_media_position_order ON block_media(design_block_id, position_order);
 
 -- Comment indexing
 CREATE INDEX idx_comments_design_id ON comments(design_id);
@@ -152,6 +180,12 @@ CREATE TRIGGER updated_design_blocks_updated_at
 -- Media
 CREATE TRIGGER updated_media_updated_at
     BEFORE UPDATE ON media
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+
+-- Block Media
+CREATE TRIGGER updated_media_updated_at
+    BEFORE UPDATE ON block_media
     FOR EACH ROW
     EXECUTE FUNCTION update_updated_at_column();
 
