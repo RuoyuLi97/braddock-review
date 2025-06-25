@@ -175,7 +175,7 @@ const validators = {
                 });
     },
 
-    jsonField: (fieldName, isOptional = true) => {
+    jsonField: (fieldName, isOptional=true) => {
         const validator = body(fieldName);
 
         if (isOptional) {
@@ -242,7 +242,7 @@ const designValidation = [
 const tagValidation = [
     validators.simpleText('name', 1, 50, false),
     validators.simpleText('slug', 1, 50, false),
-    validators.longText('description', 1000, [], true)
+    validators.longText('description', 1000, ['b', 'i', 'em', 'strong', 'p', 'br'], true)
 ];
 
 // Tag Assignment
@@ -250,8 +250,8 @@ const tagAssignmentValidation = [
     validators.integer('design_id', 1, null, true),
     body('tags')
         .optional()
-        .isArray({max: 20})
-        .withMessage('Maximum 20 tags allowed!')
+        .isArray({max: 10})
+        .withMessage('Maximum 10 tags allowed!')
         .custom(tags => {
             if (!Array.isArray(tags)) return true;
             return tags.every(tag => {
