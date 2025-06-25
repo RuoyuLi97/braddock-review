@@ -15,7 +15,7 @@ const validators = {
                 .isLength({min:3, max:50})
                 .withMessage('Username must be 3-50 characters long!')
                 .matches(/^[a-zA-Z0-9_-]+$/)
-                .withMessage('Username can only contain letter, number, undescore, and hyphen!')
+                .withMessage('Username can only contain letters, numbers, undescores, and hyphens!')
                 .escape()
                 .trim();
     },
@@ -29,7 +29,7 @@ const validators = {
         }
 
         return validator
-                .isLength({max:100})
+                .isLength({min: 1, max:100})
                 .withMessage('Email must not exceed 100 characters!')
                 .isEmail()
                 .withMessage('Please provide a valid email address!')
@@ -117,7 +117,7 @@ const validators = {
 
         return validator
                 .isInt(options)
-                .withMessage(`${fieldName} must be a valid integer ${max ? `between ${min} and ${max}` : `minimun ${min}`}!`);
+                .withMessage(`${fieldName} must be a valid integer ${max ? `between ${min} and ${max}` : `minimum ${min}`}!`);
     },
 
     // Enum
@@ -155,26 +155,52 @@ const validators = {
         }
 
         return validator
-                .custom(location => {
-                    if (!location) return true;
+                .custom((locationValue, {req, location, path}) => {
+                    if (!locationValue) return true;
                     
-                    if (typeof location != 'object' || 
-                        location.type !== 'Point' ||
-                        !Array.isArray(location.coordinates) ||
-                        location.coordinates.length !== 2) {
+                    if (typeof locationValue !== 'object' || 
+                        locationValue.type !== 'Point' ||
+                        !Array.isArray(locationValue.coordinates) ||
+                        locationValue.coordinates.length !== 2) {
                             throw new Error('Location must be a valid GeoJSON Point!');
                     }
 
-                    const [lon, lat] = location.coordinates;
-                    if (typeof lon !== 'number' || typeof lat !== 'number' || 
-                        lon < -180 || lon > 180 || lat < -90 || lat > 90) {
+                    const [lng, lat] = locationValue.coordinates;
+                    if (typeof lng !== 'number' || typeof lat !== 'number' || 
+                        lng < -180 || lng > 180 || lat < -90 || lat > 90) {
                             throw new Error('Location coordinates must be valid longitude (-180 to 180) and latitude (-90 to 90)!');
                     }
 
                     return true;
                 });
-    } 
-};
+    },
+
+    jsonField: (fieldName, isOptional = true) => {
+        const validator = body(fieldName);
+
+        if (isOptional) {
+            validator.optional();
+        }
+
+        return validator
+                .custom((value, {req, location, path}) => {
+                    if (!value) return true;
+
+                    try {
+                        if (typeof value === 'object') return true;
+
+                        if (typeof value === 'string') {
+                            JSON.parse(value);
+                            return true;
+                        }
+
+                        throw new Error(`${fieldName} must be valid JSON!`);
+                    } catch (error) {
+                        throw new Error(`${fieldName} must be valid JSON!`);
+                    }
+                });
+    }
+}; 
 
 // Validations
 // Registration
@@ -216,15 +242,33 @@ const designValidation = [
 const tagValidation = [
     validators.simpleText('name', 1, 50, false),
     validators.simpleText('slug', 1, 50, false),
-    validators.longText('description', 1, 1000, ['b', 'i', 'em', 'strong', 'p', 'br'], true)
+    validators.longText('description', 1000, [], true)
+];
+
+// Tag Assignment
+const tagAssignmentValidation = [
+    validators.integer('design_id', 1, null, true),
+    body('tags')
+        .optional()
+        .isArray({max: 20})
+        .withMessage('Maximum 20 tags allowed!')
+        .custom(tags => {
+            if (!Array.isArray(tags)) return true;
+            return tags.every(tag => {
+                    typeof tag === 'string' && tag.length >= 1 
+                    && tag.length <= 50 && /^[a-zA-Z0-9\s\-_#]+$/.test(tag.trim())
+            });
+        }).withMessage('Tags must be strings (1-50 characters) with only letters, numbers, spaces, hyphens, underscores, and hashtags!')
 ];
 
 // Design block
 const designBlockValidation = [
     validators.simpleText('block_type', 1, 50, false),
     validators.simpleText('title', 1, 200, true),
-    validators.longText('content', 50000, ['b', 'i', 'em', 'strong', 'p', 'br'], true),
-    validators.integer('display_order', 0, null, false)
+    validators.longText('content', 50000, ['b', 'i', 'em', 'strong', 'p', 'br', 'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'], true),
+    validators.integer('display_order', 0, null, false),
+    validators.simpleText('layout_type', 1, 50, true),
+    validators.jsonField('layout_settings', true)
 ];
 
 // Media
@@ -236,11 +280,27 @@ const mediaValidation = [
     validators.integer('duration', 0, null, true),
     validators.url('thumbnail_url', true),
     validators.location('location', true),
-    validators.integer('class_year', 1900, 2100, true)
+    validators.integer('class_year', 1900, 2100, true),
+    validators.longText('alt_text', 500, [], true),
+    validators.longText('caption', 1000, ['b', 'i', 'em', 'strong', 'p', 'br'], true),
+    validators.integer('file_size', 0, null, true),
+    validators.jsonField('dimension', true)
+];
+
+// Block media
+const blockMediaValidation = [
+    validators.integer('design_block_id', 1, null, false),
+    validators.integer('media_id', 1, null, false),
+    validators.integer('position_order', 0, null, false),
+    validators.simpleText('layout_position', 1, 50, true),
+    validators.jsonField('media_config', true),
+    validators.jsonField('text_overlay', true)
 ];
 
 // Comment
 const commentValidation = [
+    validators.integer('design_id', 1, null, true),
+    validators.integer('user_id', 1, null, true),
     validators.integer('design_block_id', 1, null, true),
     validators.integer('parent_comment_id', 1, null, true),
     validators.longText('comment_text', 5000, ['b', 'i', 'em', 'strong', 'p', 'br'], false)
@@ -275,8 +335,11 @@ module.exports = {
     passwordChangeValidation,
     designValidation,
     tagValidation,
+    tagAssignmentValidation,
     designBlockValidation,
     mediaValidation,
+    blockMediaValidation,
     commentValidation,
-    validationErrorHandler
+    validationErrorHandler, 
+    validators
 };
