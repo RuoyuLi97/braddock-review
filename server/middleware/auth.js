@@ -134,7 +134,7 @@ const requireOwnership = (tableName) => {
                             FROM block_media bm
                             JOIN design_blocks db ON bm.design_block_id = db.id
                             JOIN designs d ON db.design_id = d.id
-                            WHERE db.id = $1`;
+                            WHERE bm.id = $1`;
                     break;
             }
 
