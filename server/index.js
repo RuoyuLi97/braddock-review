@@ -20,7 +20,10 @@ app.use((req, res) => {
     res.status(404).json({error: 'Route not found!'});
 });
 
-if (require.main === module) {
+const __filename = fileURLToPath(import.meta.url);
+const isMainModule = process.argv[1] === __filename;
+
+if (isMainModule) {
     app.listen(PORT, () => {
         console.log(`Server running on http://localhost:${PORT}`);
         console.log(`API endpoints:`)
