@@ -1,14 +1,22 @@
-import {getHealthStatus, getConnectionHealthStatus} from '../../controllers/healthCheckController.js';
-import {testDatabaseConnection} from '../../db.js';
-import {testS3Connection} from '../../utils/s3Client.js';
+import {jest, describe, it, expect, beforeEach, afterEach} from '@jest/globals';
 
-jest.mock('../../db', () => ({
-    testDatabaseConnection: jest.fn()
+const mockTestDatabaseConnection = jest.fn();
+const mockTestS3Connection = jest.fn();
+
+jest.unstable_mockModule('../../db.js', () => ({
+    testDatabaseConnection: mockTestDatabaseConnection,
+    query: jest.fn(),
+    connect: jest.fn(),
+    pool: {},
+    closePool: jest.fn()
 }));
 
-jest.mock('../../utils/s3Client', () => ({
-    testS3Connection: jest.fn()
+jest.unstable_mockModule('../../utils/s3Client.js', () => ({
+    testS3Connection: mockTestS3Connection,
+    s3: {}
 }));
+
+const {getHealthStatus, getConnectionHealthStatus} = await import('../../controllers/healthCheckController.js');
 
 describe('Health Check Controller', () => {
     let mockReq, mockRes;
@@ -64,12 +72,12 @@ describe('Health Check Controller', () => {
 
     describe('getConnectionHealthStatus', () => {
         it('should return healthy status when both connections are healthy', async() => {
-            testDatabaseConnection.mockResolvedValue({
+            mockTestDatabaseConnection.mockResolvedValue({
                 status: 'healthy', 
                 message: 'Database connection succeeded!'
             });
 
-            testS3Connection.mockResolvedValue({
+            mockTestS3Connection.mockResolvedValue({
                 status: 'healthy', 
                 message: 'S3 connection succeeded!'
             });
@@ -88,7 +96,7 @@ describe('Health Check Controller', () => {
                             status: 'healthy', 
                             message: 'Database connection succeeded!'
                         },
-                        s3 : {
+                        s3: {
                             status: 'healthy', 
                             message: 'S3 connection succeeded!'
                         }
@@ -96,14 +104,14 @@ describe('Health Check Controller', () => {
                 })
             );
 
-            expect(testDatabaseConnection).toHaveBeenCalledTimes(1);
-            expect(testS3Connection).toHaveBeenCalledTimes(1);
+            expect(mockTestDatabaseConnection).toHaveBeenCalledTimes(1);
+            expect(mockTestS3Connection).toHaveBeenCalledTimes(1);
         });
 
         it('should return unhealthy status when database connection failed', async() => {
-            testDatabaseConnection.mockRejectedValue(new Error('Database connection failed!'));
+            mockTestDatabaseConnection.mockRejectedValue(new Error('Database connection failed!'));
 
-            testS3Connection.mockResolvedValue({
+            mockTestS3Connection.mockResolvedValue({
                 status: 'healthy', 
                 message: 'S3 connection succeeded!'
             });
@@ -129,12 +137,12 @@ describe('Health Check Controller', () => {
         });
 
         it('should return unhealthy status when s3 connection failed', async() => {
-            testDatabaseConnection.mockResolvedValue({
+            mockTestDatabaseConnection.mockResolvedValue({
                 status: 'healthy', 
                 message: 'Database connection succeeded!'
             });
 
-            testS3Connection.mockRejectedValue(new Error('S3 connection failed!'));
+            mockTestS3Connection.mockRejectedValue(new Error('S3 connection failed!'));
 
             await getConnectionHealthStatus(mockReq, mockRes);
 
@@ -157,9 +165,9 @@ describe('Health Check Controller', () => {
         });
 
         it('should handle error without message property', async() => {
-            testDatabaseConnection.mockRejectedValue({code: 'ECONNREFUSED'});
+            mockTestDatabaseConnection.mockRejectedValue({code: 'ECONNREFUSED'});
 
-            testS3Connection.mockResolvedValue({
+            mockTestS3Connection.mockResolvedValue({
                 status: 'healthy', 
                 message: 'S3 connection succeeded!'
             });
