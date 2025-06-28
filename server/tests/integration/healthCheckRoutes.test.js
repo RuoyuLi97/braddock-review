@@ -1,6 +1,6 @@
-const request = require('supertest');
-const app = require('../../index');
-const db = require('../../db');
+import request from 'supertest';
+import app from '../../index.js';
+import * as db from '../../db.js';
 
 describe('Health Check Routes Integration Test', () => {
     afterAll(async() => {

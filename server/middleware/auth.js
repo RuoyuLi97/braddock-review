@@ -1,6 +1,6 @@
-const jwt = require('jsonwebtoken');
-const db = require('../db');
-require('dotenv').config();
+import jwt from 'jsonwebtoken';
+import * as db from '../db.js';
+import 'dotenv/config';
 
 // Authentication
 const authenticateToken = (req, res, next) => {
@@ -167,7 +167,7 @@ const requireOwnership = (tableName) => {
     };
 };
 
-module.exports = {
+export {
     authenticateToken,
     checkAuth,
     requireRole,

@@ -1,4 +1,4 @@
-const rateLimit = require('express-rate-limit');
+import rateLimit from 'express-rate-limit';
 
 // Auth limiter
 const authLimiter = rateLimit({
@@ -60,7 +60,7 @@ const registerLimiter = rateLimit({
     legacyHeaders: false
 });
 
-module.exports = {
+export {
     authLimiter,
     apiLimiter,
     uploadLimiter,

@@ -1,6 +1,7 @@
-const express = require('express');
+import express from 'express';
+import * as healthCheckController from '../controllers/healthCheckController.js';
+
 const router = express.Router();
-const healthCheckController = require('../controllers/healthCheckController');
 
 router.route('/')
         .get(healthCheckController.getHealthStatus)
@@ -24,4 +25,4 @@ router.route('/connection')
             });
         });
 
-module.exports = router
+export default router;

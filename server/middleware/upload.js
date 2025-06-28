@@ -1,9 +1,9 @@
-const multer = require('multer');
-const multerS3 = require('multer-s3');
-const {s3} = require('../utils/s3Client');
-const path = require('path');
-const crypto = require('crypto');
-require('dotenv').config();
+import multer from 'multer';
+import multerS3 from 'multer-s3';
+import {s3} from '../utils/s3Client.js';
+import path from 'path';
+import crypto from 'crypto';
+import 'dotenv/config';
 
 // s3Storage config
 const s3Storage = multerS3({
@@ -172,7 +172,7 @@ const uploadErrorHandler = (err, req, res, next) => {
     next();
 };
 
-module.exports = {
+export {
     imageUpload,
     videoUpload,
     mediaUpload,

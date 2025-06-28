@@ -1,4 +1,4 @@
-const helmet = require('helmet');
+import helmet from 'helmet';
 
 const securityMiddleware = (app) => {
     app.use(helmet({
@@ -54,4 +54,4 @@ const securityMiddleware = (app) => {
     });
 };
 
-module.exports = securityMiddleware;
+export default securityMiddleware;

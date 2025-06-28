@@ -1,5 +1,5 @@
-const {body, validationResult} = require('express-validator');
-const DOMPurify = require('isomorphic-dompurify');
+import {body, validationResult} from 'express-validator';
+import DOMPurify from 'isomorphic-dompurify';
 
 // Validator functions
 const validators = {
@@ -328,7 +328,7 @@ const validationErrorHandler = (req, res, next) => {
     next();
 };
 
-module.exports = {
+export {
     registerValidation,
     loginValidation,
     profileUpdateValidation,

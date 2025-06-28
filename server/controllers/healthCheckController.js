@@ -1,5 +1,5 @@
-const {testDatabaseConnection} = require('../db');
-const {testS3Connection} = require('../utils//s3Client');
+import {testDatabaseConnection} from '../db.js';
+import {testS3Connection} from '../utils/s3Client.js';
 
 // Basic health check
 const getHealthStatus = async (req, res) => {
@@ -68,7 +68,7 @@ const getConnectionHealthStatus = async(req, res) => {
     }
 };
 
-module.exports = {
+export {
     getHealthStatus,
     getConnectionHealthStatus
 };

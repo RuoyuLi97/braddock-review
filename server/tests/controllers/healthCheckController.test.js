@@ -1,6 +1,6 @@
-const {getHealthStatus, getConnectionHealthStatus} = require('../../controllers/healthCheckController');
-const {testDatabaseConnection} = require('../../db');
-const {testS3Connection} = require('../../utils/s3Client');
+import {getHealthStatus, getConnectionHealthStatus} from '../../controllers/healthCheckController.js';
+import {testDatabaseConnection} from '../../db.js';
+import {testS3Connection} from '../../utils/s3Client.js';
 
 jest.mock('../../db', () => ({
     testDatabaseConnection: jest.fn()

@@ -1,5 +1,5 @@
-const {S3Client, HeadBucketCommand} = require('@aws-sdk/client-s3');
-require('dotenv').config();
+import {S3Client, HeadBucketCommand} from '@aws-sdk/client-s3';
+import 'dotenv/config';
 
 const s3 = new S3Client({
     region: process.env.AWS_REGION,
@@ -27,4 +27,4 @@ const testS3Connection = async() => {
     }
 };
 
-module.exports = {s3, testS3Connection};
+export {s3, testS3Connection};
