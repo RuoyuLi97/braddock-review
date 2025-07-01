@@ -94,6 +94,49 @@ const requireRole = (allowedRoles) => {
     };
 };
 
+// Admin check
+const isAdmin = (req, res, next) => {
+    try {
+        if (!req.user) {
+            return res.status(401).json({
+                error: 'Authentication required!'
+            });
+        }
+
+        const adminEmailsStr = process.env.ADMIN_EMAILS || '';
+        const adminEmails = adminEmailsStr
+                            .split(',')
+                            .map(email => email.trim())
+                            .filter(email => email.length > 0);
+        
+        if (adminEmails.length === 0) {
+            console.error('No admin emails configured in ADMIN_EMAILS environment variable');
+            return res.status(403).json({
+                error: 'Admin access required!',
+                code: 'ADMIN_ACCESS_DENIED'
+            });
+        }
+
+        if (adminEmails.includes(req.user.email)) {
+            console.warn(`ADMIN ACCESS DENIED: User ${req.user.username} (${req.user.email}) attempted admin access from ${req.ip}`);
+            return res.status(403).json({
+                error: 'Admin access denied!',
+                code: 'ADMIN_ACCESS_DENIED'
+            });
+        }
+
+        console.log(`ADMIN ACCESS GRANTED: User ${req.user.username} (${req.user.email} accessed admin function from ${req.ip})`);
+        req.isAdmin = true;
+        next();
+    } catch (error) {
+        console.error('Admin checked failed: ', error);
+        res.status(500).json({
+            error: 'Server error during admin verification',
+            code: 'ADMIN_CHECK_ERROR'
+        });
+    }
+};
+
 // Ownership auth
 const requireOwnership = (tableName) => {
     return async (req, res, next) => {
@@ -171,5 +214,6 @@ export {
     authenticateToken,
     checkAuth,
     requireRole,
+    isAdmin,
     requireOwnership
 };
