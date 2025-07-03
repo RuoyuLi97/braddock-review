@@ -74,7 +74,7 @@ const login = async(req, res) => {
         const {email, password} = req.body;
 
         const result = await query(
-            `SELECT id, username, email, password_hash, role FROM email = $1`,
+            `SELECT id, username, email, password_hash, role FROM users WHERE email = $1`,
             [email]
         );
 
@@ -137,7 +137,7 @@ const logout = async(req, res) => {
     try {
         // Check the logged in user
         if (req.user) {
-            console.log(`LOGOUT SUCCESS: User ${user.username} (${user.id}) logged out from ${req.ip}`);
+            console.log(`LOGOUT SUCCESS: User ${req.user.username} (${req.user.id}) logged out from ${req.ip}`);
         }
 
         res.status(200).json({
@@ -169,7 +169,7 @@ const refreshToken = async(req, res) => {
             {expiresIn: process.env.JWT_EXPIRES_IN || '24h'}
         );
 
-        console.log(`TOKEN REFRESH SUCCESS: User ${user.username} (${user.id}) refreshed token from ${req.ip}`);
+        console.log(`TOKEN REFRESH SUCCESS: User ${username} (${userId}) refreshed token from ${req.ip}`);
         
         res.status(200).json({
             message: 'Token refreshed successfully!',
@@ -277,7 +277,7 @@ const resetPassword = async(req, res) => {
             }
         } catch (jwtError) {
             console.warn(`PASSWORD RESET FAILED: Invalid token from ${req.ip}`);
-            res.status(400).json({
+            return res.status(400).json({
                 error: 'Invalid or expired reset token!'
             });
         }
@@ -290,7 +290,7 @@ const resetPassword = async(req, res) => {
 
         if (userResult.rows.length === 0) {
             console.warn(`PASSWORD RESET FAILED: User not found for token from ${req.ip}`);
-            res.status(400).json({
+            return res.status(400).json({
                 error: 'Invalid reset token!'
             });
         }
