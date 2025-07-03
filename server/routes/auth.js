@@ -23,6 +23,11 @@ router.post('/login',
     authController.login
 );
 
+// Logout
+router.post('/logout',
+    authController.logout
+);
+
 // Reset password
 router.post('/forgot-password',
     rateLimiter.apiLimiter,
@@ -42,12 +47,6 @@ router.post('/reset-password',
 );
 
 // Private routes
-// Logout
-router.post('/logout',
-    auth.authenticateToken,
-    authController.logout
-);
-
 // Refresh token
 router.post('/refresh',
     auth.authenticateToken,
