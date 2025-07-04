@@ -22,7 +22,7 @@ const authenticateToken = (req, res, next) => {
 
         next();
     } catch (error) {
-        console.warn(`AUTH FALIED: ${req.ip} - ${error.message}`);
+        console.warn(`AUTH FAILED: ${req.ip} - ${error.message}`);
 
         if (error.name === 'TokenExpiredError') {
             return res.status(401).json({
@@ -32,14 +32,14 @@ const authenticateToken = (req, res, next) => {
         }
 
         if (error.name === 'JsonWebTokenError') {
-            return res.status(403).json({
+            return res.status(401).json({
                 error: 'Invalid token! Please login again!',
                 code: 'INVALID_TOKEN'
             });
         }
 
         if (error.name === 'NotBeforeError') {
-            return res.status(403).json({
+            return res.status(401).json({
                 error: 'Token not active yet!',
                 code: 'TOKEN_NOT_ACTIVE'
             });
@@ -117,7 +117,7 @@ const isAdmin = (req, res, next) => {
             });
         }
 
-        if (adminEmails.includes(req.user.email)) {
+        if (!adminEmails.includes(req.user.email)) {
             console.warn(`ADMIN ACCESS DENIED: User ${req.user.username} (${req.user.email}) attempted admin access from ${req.ip}`);
             return res.status(403).json({
                 error: 'Admin access denied!',
