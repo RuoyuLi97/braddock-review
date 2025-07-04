@@ -49,7 +49,7 @@ const register = async(req, res) => {
         console.log(`REGISTRATION SUCCESS: User ${user.username} (${user.id}) registered with role ${user.role} from ${req.ip}`);
 
         res.status(201).json({
-            message: 'User resgistered successfully!',
+            message: 'User registered successfully!',
             user: {
                 id: user.id,
                 username: user.username,
@@ -245,7 +245,7 @@ const forgotPassword = async(req, res) => {
 
             // TODO: Create a password_resets table for store reset token in database
             console.log(`PASSWORD RESET REQUESTED: User ${user.username} (${user.id}) - Token: ${resetToken}`);
-            console.log(`Reset URL would be: ${process.env.CORS_ORGIN}/reset-password?token=${resetToken}`);
+            console.log(`Reset URL would be: ${process.env.CORS_ORIGIN}/reset-password?token=${resetToken}`);
 
             // TODO: Send actual email with reset link using AWS SES with AWS credentials
             // await sendPasswordResetEmail(user.email, user.username, resetToken);
