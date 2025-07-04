@@ -74,7 +74,7 @@ const login = async(req, res) => {
         const {email, password} = req.body;
 
         const result = await query(
-            `SELECT id, username, email, password_hash, role FROM users WHERE email = $1`,
+            `SELECT id, username, email, password_hash, role, created_at FROM users WHERE email = $1`,
             [email]
         );
 
