@@ -31,7 +31,7 @@ router.post('/logout',
 // Reset password
 router.post('/forgot-password',
     rateLimiter.apiLimiter,
-    validation.validators.email('email', false),
+    validation.validators.email(false),
     validation.validationErrorHandler,
     authController.forgotPassword
 );
