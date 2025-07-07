@@ -1,3 +1,15 @@
+import 'dotenv/config';
+
+// Check if user is admin based on email
+const isAdmin = (email) => {
+    const adminEmailsStr = process.env.ADMIN_EMAILS || '';
+    const adminEmails = adminEmailsStr
+                        .split(',')
+                        .map(email => email.trim())
+                        .filter(email => email.length > 0);
+    return adminEmails.length > 0 && adminEmails.includes(email);
+}
+
 // Generate URL-friendly slug from text
 const generateSlug = (text) => {
     if (!text || typeof text !== 'string') {
@@ -30,6 +42,7 @@ const generateThumbnail = (videoUrl) => {
 };
 
 export {
+    isAdmin,
     generateSlug,
     formatFileSize,
     generateThumbnail
