@@ -26,7 +26,7 @@ const generateSlug = (text) => {
 
 // Format file size in bytes to human-readable format
 const formatFileSize = (bytes) => {
-    if (!bytes || bytes === 0)return '0 B';
+    if (!bytes || bytes === 0) return '0 B';
 
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(1024));
