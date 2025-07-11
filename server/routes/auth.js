@@ -1,6 +1,6 @@
 import express from 'express';
 import * as authController from '../controllers/authController.js';
-import * as auth from '../middleware/auth.js';
+import * as auth from '../middleware/authMiddleware.js';
 import * as rateLimiter from '../middleware/rateLimiter.js';
 import * as validation from '../middleware/validation.js';
 
