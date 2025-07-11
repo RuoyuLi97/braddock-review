@@ -37,7 +37,7 @@ const register = async(req, res) => {
         // Generate JWT token
         const token = jwt.sign(
             {
-                userId: user.id,
+                id: user.id,
                 username: user.username,
                 email: user.email,
                 role: user.role
@@ -101,7 +101,7 @@ const login = async(req, res) => {
         // Generate JWT token
         const token = jwt.sign(
             {
-                userId: user.id,
+                id: user.id,
                 username: user.username,
                 email: user.email,
                 role: user.role
@@ -156,11 +156,11 @@ const logout = async(req, res) => {
 const refreshToken = async(req, res) => {
     try {
         // Check the logged in user
-        const {userId, username, email, role} = req.user;
+        const {id, username, email, role} = req.user;
 
         const newToken = jwt.sign(
             {
-                userId,
+                id,
                 username,
                 email,
                 role
@@ -169,12 +169,12 @@ const refreshToken = async(req, res) => {
             {expiresIn: process.env.JWT_EXPIRES_IN || '24h'}
         );
 
-        console.log(`TOKEN REFRESH SUCCESS: User ${username} (${userId}) refreshed token from ${req.ip}`);
+        console.log(`TOKEN REFRESH SUCCESS: User ${username} (${id}) refreshed token from ${req.ip}`);
         
         res.status(200).json({
             message: 'Token refreshed successfully!',
             user: {
-                id: userId,
+                id: id,
                 username,
                 email,
                 role
@@ -193,12 +193,12 @@ const refreshToken = async(req, res) => {
 // Verify token
 const verifyToken = async(req, res) => {
     try {
-        const {userId, username, email, role} = req.user;
+        const {id, username, email, role} = req.user;
 
         res.status(200).json({
             message: 'Token is valid!',
             user: {
-                id: userId,
+                id: id,
                 username, 
                 email,
                 role
@@ -235,7 +235,7 @@ const forgotPassword = async(req, res) => {
             
             const resetToken = jwt.sign(
                 {
-                    userId: user.id,
+                    id: user.id,
                     email: user.email,
                     type: 'password_reset'
                 },
@@ -285,7 +285,7 @@ const resetPassword = async(req, res) => {
         // Check existing user
         const userResult = await query(
             `SELECT id, username, email FROM users WHERE id = $1 AND email = $2`,
-            [decoded.userId, decoded.email]
+            [decoded.id, decoded.email]
         );
 
         if (userResult.rows.length === 0) {

@@ -72,7 +72,7 @@ describe('Auth Controller Unit Tests', () => {
             expect(responseCall.token).toBeDefined();
             
             const decoded = jwt.verify(responseCall.token, process.env.JWT_SECRET);
-            expect(decoded.userId).toBe(1);
+            expect(decoded.id).toBe(1);
             expect(decoded.email).toBe('test@example.com');
             expect(decoded.role).toBe('designer');
         });
@@ -136,7 +136,7 @@ describe('Auth Controller Unit Tests', () => {
 
             const responseCall = mockRes.json.mock.calls[0][0];
             const decoded = jwt.verify(responseCall.token, process.env.JWT_SECRET);
-            expect(decoded.userId).toBe(1);
+            expect(decoded.id).toBe(1);
             expect(decoded.username).toBe('testuser');
         });
 
@@ -220,7 +220,7 @@ describe('Auth Controller Unit Tests', () => {
     describe('Refresh JWT token', () => {
         it('should refresh jwt token for authenticated user', async() => {
             mockReq.user = {
-                userId: 1,
+                id: 1,
                 username: 'testuser',
                 email: 'test@example.com',
                 role: 'designer'
@@ -244,7 +244,7 @@ describe('Auth Controller Unit Tests', () => {
 
             const responseCall = mockRes.json.mock.calls[0][0];
             const decoded = jwt.verify(responseCall.token, process.env.JWT_SECRET);
-            expect(decoded.userId).toBe(1);
+            expect(decoded.id).toBe(1);
             expect(decoded.role).toBe('designer');
         });
     });
@@ -253,7 +253,7 @@ describe('Auth Controller Unit Tests', () => {
     describe('Verify token', () => {
         it('should verify valid token', async() => {
             mockReq.user = {
-                userId: 1,
+                id: 1,
                 username: 'testuser',
                 email: 'test@example.com',
                 role: 'designer'
@@ -298,7 +298,7 @@ describe('Auth Controller Unit Tests', () => {
                 message: 'If an account with this email exists, a password reset link has been sent!'
             });
             expect(console.log).toHaveBeenCalledWith(
-                expect.stringContaining(`Reset URL would be: ${process.env.CORS_ORGIN}/reset-password?token=`)
+                expect.stringContaining(`Reset URL would be: ${process.env.CORS_ORIGIN}/reset-password?token=`)
             );
         });
 
@@ -326,7 +326,7 @@ describe('Auth Controller Unit Tests', () => {
         it('should reset password with valid token', async() => {
             const resetToken = jwt.sign(
                 {
-                    userId: 1,
+                    id: 1,
                     email: 'test@example.com',
                     type: 'password_reset'
                 },
@@ -381,7 +381,7 @@ describe('Auth Controller Unit Tests', () => {
         it('should reject wrong token type', async() => {
             const wrongToken = jwt.sign(
                 {
-                    userId: 1,
+                    id: 1,
                     email: 'test@example.com',
                     type: 'access_token'
                 },

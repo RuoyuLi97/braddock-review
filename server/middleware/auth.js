@@ -18,7 +18,7 @@ const authenticateToken = (req, res, next) => {
 
         req.user = decoded;
 
-        console.log(`AUTH SUCCESS: User ${decoded.username} (${decoded.userId}) accessed ${req.method} ${req.path}`);
+        console.log(`AUTH SUCCESS: User ${decoded.username} (${decoded.id}) accessed ${req.method} ${req.path}`);
 
         next();
     } catch (error) {
@@ -83,7 +83,7 @@ const requireRole = (allowedRoles) => {
         }
 
         if (!allowedRoles.includes(req.user.role)) {
-            console.warn(`AUTHORIZATION FAILED: User ${req.user.username} (${req.user.userId}) role: ${req.user.role}, required ${allowedRoles.join(' or ')}`);
+            console.warn(`AUTHORIZATION FAILED: User ${req.user.username} (${req.user.id}) role: ${req.user.role}, required ${allowedRoles.join(' or ')}`);
             return res.status(403).json({
                 error: `Access denied! Required role: ${allowedRoles.join(' or ')}`,
                 userRole: req.user.role,
@@ -194,8 +194,8 @@ const requireOwnership = (tableName) => {
                 });
             }
 
-            if (resource.user_id.toString() !== req.user.userId.toString()) {
-                console.warn(`OWNERSHIP FAILED: User ${req.user.userId} tried to access ${tableName} ${resourceId} owned by ${resource.user_id}`);
+            if (resource.user_id.toString() !== req.user.id.toString()) {
+                console.warn(`OWNERSHIP FAILED: User ${req.user.id} tried to access ${tableName} ${resourceId} owned by ${resource.user_id}`);
                 return res.status(403).json({
                     error: 'You can only modify your own content!'
                 });

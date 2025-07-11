@@ -61,7 +61,7 @@ describe('Auth Integration Tests', () => {
             viewerToken = response.body.token;
 
             const decoded = jwt.verify(response.body.token, process.env.JWT_SECRET);
-            expect(decoded).toHaveProperty('userId', testViewerId);
+            expect(decoded).toHaveProperty('id', testViewerId);
             expect(decoded).toHaveProperty('username', testUser.username);
         });
 
@@ -170,7 +170,7 @@ describe('Auth Integration Tests', () => {
             expect(response.body.user).not.toHaveProperty('password_hash');
 
             const decoded = jwt.verify(response.body.token, process.env.JWT_SECRET);
-            expect(decoded).toHaveProperty('userId', testViewerId);
+            expect(decoded).toHaveProperty('id', testViewerId);
         });
 
         it('should failt to login with invalid email', async() => {
@@ -277,7 +277,7 @@ describe('Auth Integration Tests', () => {
         it('should fail to verify with expired token', async() => {
             const expiredToken = jwt.sign(
                 {
-                    userId: testViewerId,
+                    id: testViewerId,
                     username: testUser.username
                 },
                 process.env.JWT_SECRET,
@@ -308,7 +308,7 @@ describe('Auth Integration Tests', () => {
             expect(response.body.user.token).not.toBe(viewerToken);
             
             const decoded = jwt.verify(response.body.token, process.env.JWT_SECRET);
-            expect(decoded).toHaveProperty('userId', testViewerId);
+            expect(decoded).toHaveProperty('id', testViewerId);
 
             viewerToken = response.body.token;
         });
@@ -384,7 +384,7 @@ describe('Auth Integration Tests', () => {
         beforeAll(() => {
             resetToken = jwt.sign(
                 {
-                    userId: testViewerId,
+                    id: testViewerId,
                     email: testUser.email,
                     type: 'password_reset'
                 },
@@ -453,7 +453,7 @@ describe('Auth Integration Tests', () => {
 
             const expiredToken = jwt.sign(
                 {
-                    userId: testViewerId,
+                    id: testViewerId,
                     username: testUser.username
                 },
                 process.env.JWT_SECRET,
@@ -476,7 +476,7 @@ describe('Auth Integration Tests', () => {
 
             const wrongToken = jwt.sign(
                 {
-                    userId: 1,
+                    id: 1,
                     email: 'test@example.com',
                     type: 'access_token'
                 },
