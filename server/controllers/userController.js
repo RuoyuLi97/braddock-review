@@ -113,7 +113,7 @@ const changePassword = async(req, res) => {
 
         // check if user still exists
         const checkUser = await db.query(
-            `SELECT id FROM users WHERE id = $1`,
+            `SELECT id, username, password_hash FROM users WHERE id = $1`,
             [id]
         );
 
@@ -175,7 +175,7 @@ const deleteAccount = async(req, res) => {
         
         // check if user still exists
         const checkUser = await db.query(
-            `SELECT id FROM users WHERE id = $1`,
+            `SELECT id, username FROM users WHERE id = $1`,
             [id]
         );
 
@@ -191,7 +191,7 @@ const deleteAccount = async(req, res) => {
         await db.query('DELETE FROM users WHERE id = $1', [id]);
         console.log(`ACCOUNT DELETION: User ${user.username} (${user.id}) deleted their account from ${req.ip}`);
         res.status(200).json({
-            message: 'Account delted successfully!'
+            message: 'Account deleted successfully!'
         });
     } catch (error) {
         console.error('Delete account error: ', error);
@@ -276,7 +276,7 @@ const getAllUsers = async(req, res) => {
         }));
 
         res.status(200).json({
-            message: 'User retrieved successfully!',
+            message: 'Users retrieved successfully!',
             users,
             pagination: {
                 currentPage: page,
@@ -304,7 +304,7 @@ const getAllUsers = async(req, res) => {
 const getUserById = async(req, res) => {
     try {
         const currentUserEmail = req.user.email;
-        const targetUserId = req.param.id;
+        const targetUserId = req.params.id;
 
         // Check if current user is admin
         if (!isAdmin(currentUserEmail)) {
@@ -360,11 +360,11 @@ const getUserById = async(req, res) => {
 const updateUserRole = async(req, res) => {
     try {
         const currentUserEmail = req.user.email;
-        const targetUserId = req.param.id;
+        const targetUserId = req.params.id;
         const {role} = req.body;
 
         // Validate role
-        if (!['designer', 'viewer'.includes(role)]) {
+        if (!['designer', 'viewer'].includes(role)) {
             return res.status(400).json({
                 error: 'Invalid role! Must be either "designer" or "viewer"!'
             });
@@ -480,8 +480,8 @@ const getUserStats = async(req, res) => {
                 totalUsers: parseInt(stats.total_users),
                 designers: parseInt(stats.designers),
                 viewers: parseInt(stats.viewers),
-                newUser30Days: parseInt(stats.new_users_30_days),
-                newUser7Days: parseInt(stats.new_users_7_days)
+                newUsers30Days: parseInt(stats.new_users_30_days),
+                newUsers7Days: parseInt(stats.new_users_7_days)
             }
         });
     } catch (error) {
