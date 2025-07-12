@@ -1,4 +1,4 @@
-import {jest, describe, it, expect, beforeEach, afterEach} from '@jest/globals';
+import {jest, describe, it, expect, beforeAll, beforeEach, afterEach} from '@jest/globals';
 import 'dotenv/config';
 
 jest.unstable_mockModule('../../db.js', () => ({
