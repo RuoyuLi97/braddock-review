@@ -11,7 +11,7 @@ router.use(auth.authenticateToken);
 
 // User profile routes
 // Update profile
-router.put('/profile', 
+router.patch('/me/profile', 
     rateLimiter.apiLimiter,
     auth.requireRole(['designer', 'viewer']),
     validation.profileUpdateValidation,
@@ -20,7 +20,7 @@ router.put('/profile',
 );
 
 // Change password
-router.put('/change-password',
+router.patch('/me/password',
     rateLimiter.authLimiter,
     auth.requireRole(['designer', 'viewer']),
     validation.passwordChangeValidation,
@@ -29,7 +29,7 @@ router.put('/change-password',
 );
 
 // Delete account
-router.delete('/account',
+router.delete('/me',
     rateLimiter.apiLimiter,
     auth.requireRole(['designer', 'viewer']),
     userController.deleteAccount
@@ -58,7 +58,7 @@ router.get('/:id',
 );
 
 // Update user role
-router.put('/:id/role',
+router.patch('/:id/role',
     rateLimiter.apiLimiter,
     auth.requireAdmin,
     validation.validators.enum('role', ['designer', 'viewer'], false),
