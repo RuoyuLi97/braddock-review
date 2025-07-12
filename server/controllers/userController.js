@@ -1,5 +1,5 @@
-import bcrypt from 'bcrypt';
-import db from '../db.js';
+import bcrypt from 'bcryptjs';
+import {query} from '../db.js';
 import {isAdmin} from '../utils/helpers.js';
 import 'dotenv/config';
 
@@ -19,7 +19,7 @@ const updateProfile = async(req, res) => {
         }
     
         // check if user still exists
-        const checkUser = await db.query(
+        const checkUser = await query(
             `SELECT id FROM users WHERE id = $1`,
             [id]
         );
@@ -37,7 +37,7 @@ const updateProfile = async(req, res) => {
 
         if (username) {
             // Check username conflict
-            const usernameConflict = await db.query(
+            const usernameConflict = await query(
                 `SELECT id FROM users WHERE username = $1 AND id != $2`,
                 [username, id]
             );
@@ -55,7 +55,7 @@ const updateProfile = async(req, res) => {
 
         if (email) {
             // Check email conflict
-            const emailConflict = await db.query(
+            const emailConflict = await query(
                 `SELECT id FROM users WHERE email = $1 AND id != $2`,
                 [email, id]
             );
@@ -74,7 +74,7 @@ const updateProfile = async(req, res) => {
         // Update user profile
         values.push(id);
         
-        const result = await db.query(
+        const result = await query(
             `UPDATE users SET ${updates.join(', ')} 
             WHERE id = $${paramCount} 
             RETURNING id, username, email, role, created_at, updated_at`,
@@ -112,7 +112,7 @@ const changePassword = async(req, res) => {
         const {currentPassword, newPassword} = req.body;
 
         // check if user still exists
-        const checkUser = await db.query(
+        const checkUser = await query(
             `SELECT id, username, password_hash FROM users WHERE id = $1`,
             [id]
         );
@@ -149,7 +149,7 @@ const changePassword = async(req, res) => {
         const newPasswordHash = await bcrypt.hash(newPassword, saltRound);
 
         // Update password
-        await db.query(
+        await query(
             `UPDATE users SET password_hash = $1 WHERE id = $2`,
             [newPasswordHash, id]
         );
@@ -174,7 +174,7 @@ const deleteAccount = async(req, res) => {
         const id = req.user.id;
         
         // check if user still exists
-        const checkUser = await db.query(
+        const checkUser = await query(
             `SELECT id, username FROM users WHERE id = $1`,
             [id]
         );
@@ -188,7 +188,7 @@ const deleteAccount = async(req, res) => {
         const user = checkUser.rows[0];
 
         // Delete user
-        await db.query('DELETE FROM users WHERE id = $1', [id]);
+        await query('DELETE FROM users WHERE id = $1', [id]);
         console.log(`ACCOUNT DELETION: User ${user.username} (${user.id}) deleted their account from ${req.ip}`);
         res.status(200).json({
             message: 'Account deleted successfully!'
@@ -215,7 +215,7 @@ const getAllUsers = async(req, res) => {
         }
         
         // check if admin still exists
-        const checkAdmin = await db.query(
+        const checkAdmin = await query(
             `SELECT id FROM users WHERE email = $1`,
             [currentUserEmail]
         );
@@ -236,7 +236,7 @@ const getAllUsers = async(req, res) => {
         const search = req.query.search;
 
         // Query the database
-        let query = 'SELECT id, username, email, role, created_at, updated_at FROM users';
+        let queryText = 'SELECT id, username, email, role, created_at, updated_at FROM users';
         let countQuery = 'SELECT COUNT(*) FROM users';
         const conditions = [];
         const values = [];
@@ -256,19 +256,19 @@ const getAllUsers = async(req, res) => {
 
         if (conditions.length > 0) {
             const whereClause = ` WHERE ${conditions.join(' AND ')}`;
-            query += whereClause;
+            queryText += whereClause;
             countQuery += whereClause;
         }
 
         // Get total count
-        const countResult = await db.query(countQuery, values);
+        const countResult = await query(countQuery, values);
         const totalCount = parseInt(countResult.rows[0].count);
 
         // Get users with pagination
-        query += ` ORDER BY created_at DESC LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
+        queryText += ` ORDER BY created_at DESC LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
         values.push(limit, offset);
 
-        const result = await db.query(query, values);
+        const result = await query(queryText, values);
 
         const users = result.rows.map(user => ({
             ...user,
@@ -314,7 +314,7 @@ const getUserById = async(req, res) => {
         }
         
         // check if admin still exists
-        const checkAdmin = await db.query(
+        const checkAdmin = await query(
             `SELECT id FROM users WHERE email = $1`,
             [currentUserEmail]
         );
@@ -326,7 +326,7 @@ const getUserById = async(req, res) => {
         }
 
         // Check if target user exists
-        const result = await db.query(
+        const result = await query(
             `SELECT id, username, email, role, created_at, updated_at FROM users WHERE id = $1`,
             [targetUserId]
         );
@@ -378,7 +378,7 @@ const updateUserRole = async(req, res) => {
         }
         
         // check if admin still exists
-        const checkAdmin = await db.query(
+        const checkAdmin = await query(
             `SELECT id FROM users WHERE email = $1`,
             [currentUserEmail]
         );
@@ -390,7 +390,7 @@ const updateUserRole = async(req, res) => {
         }
 
         // Check if target user exists
-        const result = await db.query(
+        const result = await query(
             `SELECT id, username, email, role, created_at, updated_at FROM users WHERE id = $1`,
             [targetUserId]
         );
@@ -411,7 +411,7 @@ const updateUserRole = async(req, res) => {
         }
 
         // Update user role
-        const updateResult = await db.query(
+        const updateResult = await query(
             `UPDATE users SET role = $1 
             WHERE id = $2 
             RETURNING id, username, email, role, created_at, updated_at`,
@@ -450,7 +450,7 @@ const getUserStats = async(req, res) => {
         }
         
         // check if admin still exists
-        const checkAdmin = await db.query(
+        const checkAdmin = await query(
             `SELECT id FROM users WHERE email = $1`,
             [currentUserEmail]
         );
@@ -462,7 +462,7 @@ const getUserStats = async(req, res) => {
         }
 
         // Get user statistics
-        const statsResult = await db.query(
+        const statsResult = await query(
             `SELECT
                 COUNT(*) as total_users,
                 COUNT(CASE WHEN role = 'designer' THEN 1 END) as designers,
