@@ -300,7 +300,7 @@ const getUserById = async(req, res) => {
         const targetUserId = req.params.id;
         
         // Check ID validation
-        if (!targetUserId || isNaN(targetUserId) || parseInt(targetUserId) <= 0) {
+        if (!/^\d+$/.test(targetUserId) || parseInt(targetUserId) <= 0) {
             return res.status(400).json({
                 error: 'Invalid user ID format! ID must be a positive integer!'
             });
