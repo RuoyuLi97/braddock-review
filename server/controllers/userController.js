@@ -299,7 +299,14 @@ const getUserById = async(req, res) => {
         const currentUserEmail = req.user.email;
         const targetUserId = req.params.id;
         
-        // check if admin still exists
+        // Check ID validation
+        if (!targetUserId || isNaN(targetUserId) || parseInt(targetUserId) <= 0) {
+            return res.status(400).json({
+                error: 'Invalid user ID format! ID must be a positive integer!'
+            });
+        }
+        
+        // Check if admin still exists
         const checkAdmin = await query(
             `SELECT id FROM users WHERE email = $1`,
             [currentUserEmail]
