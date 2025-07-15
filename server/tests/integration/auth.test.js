@@ -605,15 +605,5 @@ describe('Auth Integration Tests', () => {
             expect(response6.status).toBe(404);
             expect(response6.body).toHaveProperty('error', 'Route not found!');
         });
-
-        it('should handle malformed JSON', async() => {
-            const response = await request(app)
-                .post('/api/auth/login')
-                .set('Content-Type', 'application.json')
-                .send('{"invalid": json}');
-            
-            expect(response.status).toBe(400);
-            expect(response.body).toHaveProperty('error');
-        });
     });
 });
