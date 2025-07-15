@@ -206,13 +206,6 @@ const deleteAccount = async(req, res) => {
 const getAllUsers = async(req, res) => {
     try {
         const currentUserEmail = req.user.email;
-
-        // Check if current user is admin
-        if (!isAdmin(currentUserEmail)) {
-            return res.status(403).json({
-                error: 'Access denied! Admin privileges required!'
-            });
-        }
         
         // check if admin still exists
         const checkAdmin = await query(
@@ -305,13 +298,6 @@ const getUserById = async(req, res) => {
     try {
         const currentUserEmail = req.user.email;
         const targetUserId = req.params.id;
-
-        // Check if current user is admin
-        if (!isAdmin(currentUserEmail)) {
-            return res.status(403).json({
-                error: 'Access denied! Admin privileges required!'
-            });
-        }
         
         // check if admin still exists
         const checkAdmin = await query(
@@ -367,13 +353,6 @@ const updateUserRole = async(req, res) => {
         if (!['designer', 'viewer'].includes(role)) {
             return res.status(400).json({
                 error: 'Invalid role! Must be either "designer" or "viewer"!'
-            });
-        }
-        
-        // Check if current user is admin
-        if (!isAdmin(currentUserEmail)) {
-            return res.status(403).json({
-                error: 'Access denied! Admin privileges required!'
             });
         }
         
@@ -441,13 +420,6 @@ const updateUserRole = async(req, res) => {
 const getUserStats = async(req, res) => {
     try {
         const currentUserEmail = req.user.email;
-
-        // Check if current user is admin
-        if (!isAdmin(currentUserEmail)) {
-            return res.status(403).json({
-                error: 'Access denied! Admin privileges required!'
-            });
-        }
         
         // check if admin still exists
         const checkAdmin = await query(
