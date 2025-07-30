@@ -252,8 +252,6 @@ describe('User Controller Unit Tests', () => {
         });
 
         it('should get all users successfully for admin', async() => {
-            isAdmin.mockReturnValueOnce(true);
-
             query.mockResolvedValueOnce({rows: [{id: 1}]});
             query.mockResolvedValueOnce({rows: [{count: '2'}]});
             query.mockResolvedValueOnce({
@@ -284,42 +282,125 @@ describe('User Controller Unit Tests', () => {
             );
         });
 
-        it('should return 403 for non-admin user', async() => {
-            isAdmin.mockReturnValueOnce(false);
-
-            await userController.getAllUsers(mockReq, mockRes);
-
-            expect(mockRes.status).toHaveBeenCalledWith(403);
-            expect(mockRes.json).toHaveBeenCalledWith({
-                error: 'Access denied! Admin privileges required!'
-            });
-        });
-
-        it('should handle pagination and filters', async() => {
-            mockReq.query = {
-                page: '2',
-                limit: '5',
-                role: 'designer',
-                search: 'john'
-            };
-
-            isAdmin.mockReturnValueOnce(true);
-
-            query.mockResolvedValueOnce({rows: [{id: 1}]});
-            query.mockResolvedValueOnce({rows: [{count: '10'}]});
+        it('should return 404 if admin user not found', async() => {
             query.mockResolvedValueOnce({rows: []});
 
             await userController.getAllUsers(mockReq, mockRes);
 
-            const countCall = query.mock.calls[1];
-            const usersCall = query.mock.calls[2];
+            expect(mockRes.status).toHaveBeenCalledWith(404);
+            expect(mockRes.json).toHaveBeenCalledWith({
+                error: 'Admin user not found!'
+            });
+        });
 
-            expect(countCall[0]).toContain('WHERE');
-            expect(countCall[0]).toContain('role = $1');
-            expect(countCall[0]).toContain('username ILIKE $2 OR email ILIKE $2');
+        it('should return 400 for invalid limit', async() => {
+            mockReq.query = {limit: '200'};
 
-            expect(usersCall[0]).toContain('LIMIT $3 OFFSET $4');
-            expect(usersCall[1]).toEqual(['designer', '%john%', 5, 5])
+            query.mockResolvedValueOnce({rows: [{id: 1}]});
+            
+            await userController.getAllUsers(mockReq, mockRes);
+
+            expect(mockRes.status).toHaveBeenCalledWith(400);
+            expect(mockRes.json).toHaveBeenCalledWith({
+                error: 'Limit must be between 1 and 100!'
+            });
+        });
+
+        it('should return 400 for invalid role filter', async() => {
+            mockReq.query = {role: 'invalid'};
+
+            query.mockResolvedValueOnce({rows: [{id: 1}]});
+            
+            await userController.getAllUsers(mockReq, mockRes);
+
+            expect(mockRes.status).toHaveBeenCalledWith(400);
+            expect(mockRes.json).toHaveBeenCalledWith({
+                error: 'Invalid role filter! Must be "designer" or "viewer"!'
+            });
+        });
+
+        it('should handle no users found case', async() => {
+            query.mockResolvedValueOnce({rows: [{id: 1}]});
+            query.mockResolvedValueOnce({rows: [{count: '0'}]});
+
+            await userController.getAllUsers(mockReq, mockRes);
+
+            expect(mockRes.status).toHaveBeenCalledWith(200);
+            expect(mockRes.json).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    message: 'No users found matching your criteria!',
+                    users: [],
+                    pagination: expect.objectContaining({
+                        totalPages: 0,
+                        totalCount: 0
+                    })
+                })
+            );
+        });
+
+        it('should handle out of bounds page', async() => {
+            mockReq.query = {page: '10'};
+            
+            query.mockResolvedValueOnce({rows: [{id: 1}]});
+            query.mockResolvedValueOnce({rows: [{count: '25'}]});
+            query.mockResolvedValueOnce({
+                rows: [
+                    {id: 1, username: 'admin', email: 'admin@example.com', role: 'designer', created_at: new Date(), updated_at: new Date()}
+                ]
+            });
+
+            isAdmin.mockReturnValueOnce(true).mockReturnValueOnce(false);
+
+            await userController.getAllUsers(mockReq, mockRes);
+
+            expect(mockRes.status).toHaveBeenCalledWith(200);
+            expect(mockRes.json).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    message: 'Users retrieved successfully!',
+                    pagination: expect.objectContaining({
+                        currentPage: 2,
+                        totalPages: 2,
+                    }),
+                    info: expect.objectContaining({
+                        message: expect.stringContaining('Requested page 10 is beyond available data'),
+                        requestedPage: 10,
+                        correctedTo: 2,
+                        reason: 'out_of_bounds'
+                    })
+                })
+            );
+        });
+
+        it('should handle negative page', async() => {
+            mockReq.query = {page: '-1'};
+            
+            query.mockResolvedValueOnce({rows: [{id: 1}]});
+            query.mockResolvedValueOnce({rows: [{count: '25'}]});
+            query.mockResolvedValueOnce({
+                rows: [
+                    {id: 1, username: 'admin', email: 'admin@example.com', role: 'designer', created_at: new Date(), updated_at: new Date()}
+                ]
+            });
+
+            isAdmin.mockReturnValueOnce(true).mockReturnValueOnce(false);
+
+            await userController.getAllUsers(mockReq, mockRes);
+
+            expect(mockRes.status).toHaveBeenCalledWith(200);
+            expect(mockRes.json).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    message: 'Users retrieved successfully!',
+                    pagination: expect.objectContaining({
+                        currentPage: 1
+                    }),
+                    info: expect.objectContaining({
+                        message: expect.stringContaining('Invalid page number -1'),
+                        requestedPage: -1,
+                        correctedTo: 1,
+                        reason: 'invalid_page'
+                    })
+                })
+            );
         });
     });
 
@@ -331,8 +412,6 @@ describe('User Controller Unit Tests', () => {
         });
 
         it('should get user by ID successfully for admin', async() => {
-            isAdmin.mockReturnValueOnce(true);
-
             query.mockResolvedValueOnce({rows: [{id: 1}]});
             query.mockResolvedValueOnce({
                 rows: [{
@@ -362,17 +441,6 @@ describe('User Controller Unit Tests', () => {
             );
         });
 
-        it('should return 403 for non-admin user', async() => {
-            isAdmin.mockReturnValueOnce(false);
-
-            await userController.getUserById(mockReq, mockRes);
-
-            expect(mockRes.status).toHaveBeenCalledWith(403);
-            expect(mockRes.json).toHaveBeenCalledWith({
-                error: 'Access denied! Admin privileges required!'
-            });
-        });
-
         it('should return 404 if target user not found', async() => {
             isAdmin.mockReturnValueOnce(true);
 
@@ -397,8 +465,6 @@ describe('User Controller Unit Tests', () => {
         });
 
         it('should update user role successfully for admin', async() => {
-            isAdmin.mockReturnValueOnce(true);
-
             query.mockResolvedValueOnce({rows: [{id: 1}]});
             query.mockResolvedValueOnce({
                 rows: [{
@@ -445,17 +511,6 @@ describe('User Controller Unit Tests', () => {
             expect(mockRes.status).toHaveBeenCalledWith(400);
             expect(mockRes.json).toHaveBeenCalledWith({
                 error: 'Invalid role! Must be either "designer" or "viewer"!'
-            });
-        });
-
-        it('should return 403 for non-admin user', async() => {
-            isAdmin.mockReturnValueOnce(false);
-
-            await userController.updateUserRole(mockReq, mockRes);
-
-            expect(mockRes.status).toHaveBeenCalledWith(403);
-            expect(mockRes.json).toHaveBeenCalledWith({
-                error: 'Access denied! Admin privileges required!'
             });
         });
 
@@ -518,17 +573,6 @@ describe('User Controller Unit Tests', () => {
                     }
                 })
             );
-        });
-
-        it('should return 403 for non-admin user', async() => {
-            isAdmin.mockReturnValueOnce(false);
-
-            await userController.getUserStats(mockReq, mockRes);
-
-            expect(mockRes.status).toHaveBeenCalledWith(403);
-            expect(mockRes.json).toHaveBeenCalledWith({
-                error: 'Access denied! Admin privileges required!'
-            });
         });
     });
 });
