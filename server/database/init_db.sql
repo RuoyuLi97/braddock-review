@@ -23,7 +23,7 @@ CREATE TABLE users (
 -- Designs: each student's overall design work
 CREATE TABLE designs (
     id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
     title VARCHAR(200) NOT NULL,
     description TEXT,
     designer_name VARCHAR(100),
