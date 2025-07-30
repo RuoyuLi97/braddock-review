@@ -222,12 +222,33 @@ const getAllUsers = async(req, res) => {
         // Pagination
         const page = parseInt(req.query.page) || 1;
         const limit = parseInt(req.query.limit) || 20;
+
+        // Validate limit
+        if (limit < 1 || limit > 100) {
+            return res.status(400).json({
+                error: 'Limit must be between 1 and 100!'
+            });
+        }
+
         const offset = (page - 1) * limit;
 
         // Filters
         const role = req.query.role;
         const search = req.query.search;
 
+        // Validate filters
+        if (role && !['designer', 'viewer'].includes(role)) {
+            return res.status(400).json({
+                error: 'Invalid role filter! Must be "designer" or "viewer"!'
+            });
+        }
+
+        if (search && search.length > 100) {
+            return res.status(400).json({
+                error: 'Search term must not exceed 100 characters!'
+            });
+        }
+        
         // Query the database
         let queryText = 'SELECT id, username, email, role, created_at, updated_at FROM users';
         let countQuery = 'SELECT COUNT(*) FROM users';
@@ -256,10 +277,62 @@ const getAllUsers = async(req, res) => {
         // Get total count
         const countResult = await query(countQuery, values);
         const totalCount = parseInt(countResult.rows[0].count);
+        const totalPages = Math.ceil(totalCount / limit);
+
+        // Handle edge cases
+        let actualPage = page;
+        let actualOffset = offset;
+        let pageInfo = null;
+
+        // Case 1: no data at all
+        if (totalCount === 0) {
+            return res.status(200).json({
+                message: 'No users found matching your criteria!',
+                users: [],
+                pagination: {
+                    currentPage: 1,
+                    totalPages: 0,
+                    totalCount: 0,
+                    limit: limit,
+                    hasNextPage: false,
+                    hasPrevPage: false
+                },
+                filters: {
+                    role: role || null,
+                    search: search || null
+                }
+            });
+        }
+
+        // Case 2: requested page is beyond available data
+        if (page > totalPages) {
+            actualPage = totalPages;
+            actualOffset = (actualPage - 1) * limit;
+            pageInfo = {
+                message: `Requested page ${page} is beyond available data! Showing the last available page instead!`,
+                requestedPage: page,
+                correctedTo: actualPage,
+                availablePages: `1-${totalPages}`,
+                reason: 'out_of_bounds'
+            };
+        }
+
+        // Case 3: page is 0 or negative
+        if (page < 1) {
+            actualPage = 1;
+            actualOffset = 0;
+            pageInfo = {
+                message: `Invalid page number ${page}! Showing the first page instead!`,
+                requestedPage: page,
+                correctedTo: actualPage,
+                availablePages: `1-${totalPages}`,
+                reason: 'invalid_page'
+            };
+        }
 
         // Get users with pagination
         queryText += ` ORDER BY created_at DESC LIMIT $${paramCount} OFFSET $${paramCount + 1}`;
-        values.push(limit, offset);
+        values.push(limit, actualOffset);
 
         const result = await query(queryText, values);
 
@@ -268,22 +341,28 @@ const getAllUsers = async(req, res) => {
             isAdmin: isAdmin(user.email)
         }));
 
-        res.status(200).json({
+        const response = {
             message: 'Users retrieved successfully!',
             users,
             pagination: {
-                currentPage: page,
-                totalPages: Math.ceil(totalCount / limit),
-                totalCount,
-                limit,
-                hasNextPage: page < Math.ceil(totalCount / limit),
-                hasPrevPage: page > 1
+                currentPage: actualPage,
+                totalPages: totalPages,
+                totalCount: totalCount,
+                limit: limit,
+                hasNextPage: actualPage < totalPages,
+                hasPrevPage: actualPage > 1
             },
             filters: {
                 role: role || null,
                 search: search || null
             }
-        });
+        };
+
+        if (pageInfo) {
+            response.info = pageInfo;
+        }
+
+        res.status(200).json(response);
     } catch (error) {
         console.error('Get all users error: ', error);
         res.status(500).json({
