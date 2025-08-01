@@ -239,7 +239,7 @@ const passwordChangeValidation = [
 // Design
 const designValidation = [
     validators.simpleText('title', 1, 200, false),
-    validators.longText('description', 10000, ['b', 'i', 'em', 'strong', 'p', 'br'], true),
+    validators.longText('description', 1000, ['b', 'i', 'em', 'strong', 'p', 'br'], true),
     validators.simpleText('designer_name', 1, 100, true),
     validators.integer('class_year', 1900, 2100, false)
 ];
